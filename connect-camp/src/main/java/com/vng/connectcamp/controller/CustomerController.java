@@ -3,6 +3,8 @@ package com.vng.connectcamp.controller;
 import com.vng.connectcamp.model.Customer;
 import com.vng.connectcamp.repository.CustomerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.hateoas.IanaLinkRelations;
+import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,9 +25,7 @@ public class CustomerController {
     private CustomerRepository customerRepository;
 
     @GetMapping
-    public List<Customer> listAllCustomers() {
-        return customerRepository.findAll();
-    }
+    public List<Customer> listAllCustomers() { return customerRepository.findAll(); }
 
     @GetMapping("/{id}")
     public Optional<Customer> findCustomerById(@PathVariable Long id) {
@@ -35,7 +35,12 @@ public class CustomerController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Customer saveCustomer(@RequestBody Customer customer) {
-        return customerRepository.save(customer);
+        customer = customerRepository.save(customer);
+        customer.add(WebMvcLinkBuilder.linkTo(CustomerController.class).slash(customer.getId()).withSelfRel());
+
+        customer.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CustomerController.class)
+                .listAllCustomers()).withRel(IanaLinkRelations.COLLECTION));
+        return customer;
     }
 
     @PutMapping("/update")
